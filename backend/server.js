@@ -3,6 +3,9 @@ const mongoose = require('mongoose')
 const cors = require("cors")
 const session = require('express-session')
 const cookieParser = require('cookie-parser')
+const User = require('./userModel')
+const passport = require('passport')
+const bcrypt = require('bcryptjs')
 
 require('dotenv').config()
 
@@ -10,7 +13,7 @@ const app = express()
 app.use(express.json())
 
 app.use(cors({
-    origin: "http://localhost:3001",
+    origin: "http://localhost:5173", 
     credentials: true
 }))
 
@@ -19,17 +22,54 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }))
-
 app.use(cookieParser("mySecret"))
+app.use(passport.initialize())
+app.use(passport.session())
+require('./passportConfig')(passport)
+
 
 //basic user routes
 app.post('/register', async(req,res) => {
-    console.log(req.body)
+    try {
+      const myemail = req.body.userEmail
+
+      const doc = await User.findOne({email : myemail})
+      console.log(`doc is ${doc}`)
+      if(doc) { 
+        console.log(doc)
+        throw new Error("User Already exists")
+      }
+      console.log(req.body.userPassword)
+      const hashedPassword = await bcrypt.hash(req.body.userPassword,10)
+
+      const newUser = new User({ 
+        email : myemail,
+        password : hashedPassword
+      })
+
+      await newUser.save()
+      res.status(201).send("New User Registered")
+
+    } catch (error) {
+      console.log(error)
+    }
 })
 
-app.post('/login', async(req,res) => {
-    console.log(req.body)
-})
+app.post('/login', (req, res, next) => {
+  passport.authenticate("local", (err, user, info) => {
+    if (err) throw err;
+    if (!user) {
+      res.send("No User Exist");
+    } else {
+      req.login(user, (err) => {
+        if (err) throw err;
+        res.send("User authenticated");
+        console.log(req.user);
+      });
+    }
+  })(req, res, next);
+});
+
 
 app.get('/user', async(req,res) => {
     console.log(res)
