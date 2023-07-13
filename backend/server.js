@@ -4,8 +4,10 @@ const cors = require("cors")
 const session = require('express-session')
 const cookieParser = require('cookie-parser')
 const User = require('./userModel')
+const mypassport = require('./passport')
 const passport = require('passport')
 const bcrypt = require('bcryptjs')
+// const mypassport = require('./passport')
 
 require('dotenv').config()
 
@@ -25,7 +27,7 @@ app.use(session({
 app.use(cookieParser("mySecret"))
 app.use(passport.initialize())
 app.use(passport.session())
-require('./passportConfig')(passport)
+// require('./passportConfig')(passport)
 
 
 //basic user routes
@@ -50,38 +52,51 @@ app.post('/register', async(req,res) => {
       await newUser.save()
       res.status(201).send("New User Registered")
 
-    } catch (error) {
+    } catch (error) { 
       console.log(error)
     }
 })
 
+app.get('http://localhost:5173/home', (req,res) => {
+  console.log(req.body)
+  res.send(req.body)
+})
+
+app.get('/auth/google', passport.authenticate("google", {scope: ["profile"]}))
+
+
+app.get('/auth/google/callback', passport.authenticate("google",{
+  successRedirect: "http://localhost:5173/home",
+  failureRedirect: "/login/failed"
+}))
+
+app.get('/login/success', (req,res) => {
+  if(req.user){
+    res.status(200).json({
+      success: true,
+      message: "successful",
+      user: req.user,
+      cookies: req.cookies
+    })
+  }
+})
+
+app.get('/login/failed', (req,res) => {
+  res.status(401).json({
+    success: false,
+    message: "failure"
+  })
+})
+
 app.post('/login', (req, res, next) => {
-  passport.authenticate("local", (err, user, info) => {
-    if (err) throw err;
-    if (!user) {
-      res.send("No User Exist");
-    } else {
-      req.login(user, (err) => {
-        if (err) throw err;
-        res.send("User authenticated");
-        console.log(req.user);
-      });
-    }
-  })(req, res, next);
+  
 });
 
 
 app.get('/user', async(req,res) => {
     console.log(res)
 })
-
-
-
-
-
-
-
-
+ 
 
 //Database configurations
 const password = process.env.password

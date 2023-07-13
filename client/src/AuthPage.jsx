@@ -7,8 +7,13 @@ const AuthPage = () => {
     const [registerPassword, setRegisterPassword] = useState("")
     const [loginEmail, setLoginEmail] = useState("")
     const [loginPassword, setLoginPassword] = useState("")
+    
+    const google = () => {
+        window.open('http://localhost:3001/auth/google', '_self')
+    }
 
     const register = () => {
+
         axios({
             method: "post",
             data: {
@@ -74,6 +79,10 @@ const AuthPage = () => {
             </div>
             <div>
                 <button>Get User</button>
+            </div>
+
+            <div>
+                <button onClick={google}>Login with Google</button>
             </div>
         </section>
         </div>
