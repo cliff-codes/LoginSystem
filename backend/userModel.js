@@ -1,8 +1,9 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+const userSchema = new mongoose.Schema({
+  email: String,
+  name: String,
+  password: String,
+  googleId: String // Add googleId field to the schema
+});
 
-const user = new mongoose.Schema({
-    email : String,
-    password: String
-})
-
-module.exports = mongoose.model("User", user)
+module.exports = mongoose.model('User', userSchema);
